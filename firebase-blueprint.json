@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Investment": {
+      "title": "Investment",
+      "description": "An asset investment record tracked by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique record identifier" },
+        "ownerId": { "type": "string", "description": "The Firebase Auth UID of the owner" },
+        "type": { "type": "string", "enum": ["FD", "RD", "Stock", "Mutual Fund", "Gold", "Real Estate", "Other"] },
+        "name": { "type": "string" },
+        "principal": { "type": "number" },
+        "rate": { "type": "number" },
+        "startDate": { "type": "string" },
+        "maturityDate": { "type": "string" },
+        "reviewDate": { "type": "string" },
+        "monthlyContribution": { "type": "number" },
+        "compoundingFrequency": { "type": "string", "enum": ["monthly", "quarterly", "half-yearly", "yearly"] },
+        "status": { "type": "string", "enum": ["active", "matured", "reviewed"] },
+        "notes": { "type": "string" },
+        "googleEventId": { "type": "string" },
+        "reviewGoogleEventId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "type", "name", "principal", "rate", "startDate", "compoundingFrequency", "status"]
+    }
+  },
+  "firestore": {
+    "investments/{investmentId}": {
+      "schema": "Investment",
+      "description": "User specific investments"
+    }
+  }
+}

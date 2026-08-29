@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Health check test connection endpoint
+    match /test/{testId} {
+      allow read: if true;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && ownerId == request.auth.uid;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity validator for Investment
+    function isValidInvestment(inv) {
+      return inv.id is string && inv.id.size() <= 128
+        && inv.ownerId is string && inv.ownerId.size() <= 128
+        && inv.type is string && inv.type.size() <= 50
+        && inv.name is string && inv.name.size() <= 200
+        && inv.principal is number && inv.principal >= 0
+        && inv.rate is number && inv.rate >= 0
+        && inv.startDate is string && inv.startDate.size() <= 20
+        && (inv.compoundingFrequency == 'monthly' || inv.compoundingFrequency == 'quarterly' || inv.compoundingFrequency == 'half-yearly' || inv.compoundingFrequency == 'yearly')
+        && (inv.status == 'active' || inv.status == 'matured' || inv.status == 'reviewed')
+        && (!('notes' in inv) || (inv.notes is string && inv.notes.size() <= 5000))
+        && (!('maturityDate' in inv) || (inv.maturityDate is string && inv.maturityDate.size() <= 20))
+        && (!('reviewDate' in inv) || (inv.reviewDate is string && inv.reviewDate.size() <= 20))
+        && (!('monthlyContribution' in inv) || (inv.monthlyContribution is number && inv.monthlyContribution >= 0))
+        && (!('googleEventId' in inv) || (inv.googleEventId is string && inv.googleEventId.size() <= 128))
+        && (!('reviewGoogleEventId' in inv) || (inv.reviewGoogleEventId is string && inv.reviewGoogleEventId.size() <= 128));
+    }
+
+    // Rule match for investments collection
+    match /investments/{investmentId} {
+      allow get: if isSignedIn() && (resource == null || isOwner(resource.data.ownerId));
+      
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(investmentId)
+        && isValidInvestment(incoming())
+        && isOwner(incoming().ownerId);
+
+      allow update: if isSignedIn()
+        && isValidId(investmentId)
+        && isValidInvestment(incoming())
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId;
+
+      allow delete: if isSignedIn() && isOwner(existing().ownerId);
+    }
+  }
+}

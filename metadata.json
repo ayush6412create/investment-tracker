@@ -1,0 +1,6 @@
+{
+  "name": "Investment Tracker",
+  "description": "An interactive tracker for FDs, RDs, Mutual Funds, and Stocks, featuring return and EMI calculators, notes, and Google Calendar synchronization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
